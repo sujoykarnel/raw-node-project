@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "node": "^21.7.1"
+  },
+  "name": "raw-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
