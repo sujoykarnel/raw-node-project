@@ -29,5 +29,5 @@ utilities.hash = (string) => {
 };
 
 
-// export module
+// export module 
 module.exports = utilities;

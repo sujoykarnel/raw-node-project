@@ -1,6 +1,7 @@
 // dependencies
 const data = require('../../lib/data');
-const { hash } = require('../../helpers/utilities');
+const { hash, parseJSON } = require('../../helpers/utilities');
+const { error } = require('console');
 
 // module scaffolding
 const handler = {};
@@ -30,11 +31,9 @@ handler._users.post = (requestProperties, callback) => {
     const tosAgreement = typeof (requestProperties.body.tosAgreement) === 'boolean' ? requestProperties.body.tosAgreement : false;
 
 
-
-
     if (firstName && lastName && phone && tosAgreement) {
         // make sure that the user doesn't  already exist
-        
+
         data.read('users', phone, (err) => {
             if (err) {
                 let userObject = {
@@ -71,14 +70,117 @@ handler._users.post = (requestProperties, callback) => {
 };
 
 handler._users.get = (requestProperties, callback) => {
-    callback(200);
+    // check the phone number if valid
+    const phone = typeof (requestProperties.queryStringObject.phone) === 'string' && requestProperties.queryStringObject.phone.trim().length === 11 ? requestProperties.queryStringObject.phone : false;
+    if (phone) {
+        // lookup the user
+        data.read('users', phone, (err, userData) => {
+            const user = { ...parseJSON(userData) };
+
+            if (!err && user) {
+                delete user.password;
+                callback(200, user);
+            } else {
+                callback(404, {
+                    error: 'Requested user was not found'
+                });
+            }
+        });
+    } else {
+        callback(404, {
+            error: 'Requested user was not found!'
+        });
+    }
 };
 
 handler._users.put = (requestProperties, callback) => {
+    // check the phone number if valid
+    const firstName = typeof (requestProperties.body.firstName) === 'string' && requestProperties.body.firstName.trim().length > 0 ? requestProperties.body.firstName : false;
+
+    const lastName = typeof (requestProperties.body.lastName) === 'string' && requestProperties.body.lastName.trim().length > 0 ? requestProperties.body.lastName : false;
+
+    const phone = typeof (requestProperties.body.phone) === 'string' && requestProperties.body.phone.trim().length === 11 ? requestProperties.body.phone : false;
+
+    const password = typeof (requestProperties.body.password) === 'string' && requestProperties.body.password.trim().length > 0 ? requestProperties.body.password : false;
+
+    if (phone) {
+        if (firstName || lastName || password) {
+            // lookup the user
+            data.read('users', phone, (err, userData) => {
+                user = { ...parseJSON(userData) };
+                if (!err && user) {
+                    if (firstName) {
+                        user.firstName = firstName;
+                    }
+                    if (lastName) {
+                        user.lastName = lastName;
+                    }
+                    if (password) {
+                        user.password = hash(password);
+                    }
+
+                    // store to database
+                    data.update('users', phone, user, (err) => {
+                        if (!err) {
+                            callback(200, {
+                                massage: 'User was updated successfully!'
+                            });
+                        } else {
+                            callback(500, {
+                                error: 'There was a problem in server site!'
+                            });
+                        }
+                    });
+                } else {
+                    callback(400, {
+                        error: 'You have a problem in your request!'
+                    });
+                }
+            });
+        } else {
+            callback(400, {
+                error: 'You have a problem in your request!'
+            });
+        }
+    } else {
+        callback(400, {
+            error: 'Invalid phone number. Please try again!'
+        });
+    }
+
 
 };
 
 handler._users.delete = (requestProperties, callback) => {
+    // check the phone number if valid
+    const phone = typeof (requestProperties.queryStringObject.phone) === 'string' && requestProperties.queryStringObject.phone.trim().length === 11 ? requestProperties.queryStringObject.phone : false;
+
+    if (phone) {
+        //lookup the user
+        data.read('users', phone, (err, userData) => {
+            if (!err && userData) {
+                data.delete('users', phone, (err) => {
+                    if (!err) {
+                        callback(200, {
+                            massage: 'User was successfully deleted!'
+                        });
+                    } else {
+                        callback(500, {
+                            error: 'There was a server site error!'
+                        });
+                    }
+                });
+            } else {
+                callback(500, {
+                    error: 'There was a server site error!'
+                });
+            } 
+        });
+    } else {
+        callback(400, {
+            error: 'There was a problem in your request!'
+        });
+    }
 
 };
 
