@@ -16,6 +16,7 @@ handler.handleReqRes = (req, res) => {
     const method = req.method.toLowerCase();
     const queryStringObject = parsedUrl.query;
     const headersObject = req.headers;
+    const {parseJSON}=require('./utilities')
 
     const requestProperties = {
         parsedUrl,
@@ -39,6 +40,8 @@ handler.handleReqRes = (req, res) => {
     req.on('end', () => {
         realData += decoder.end();
 
+        requestProperties.body = parseJSON(realData);
+
         chosenHandler(requestProperties, (statusCode, payload) => {
             statusCode = typeof (statusCode) === 'number' ? statusCode : 500;
             payload = typeof (payload) === 'object' ? payload : {};
@@ -46,15 +49,11 @@ handler.handleReqRes = (req, res) => {
             const payloadString = JSON.stringify(payload);
 
             // return the final response
+            res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
         });
-
-        // response handle
-        res.end('Hello World');
     });
-
-
 };
 
 module.exports = handler;
